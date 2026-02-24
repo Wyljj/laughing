@@ -25,6 +25,8 @@ def test_chat_requires_token_and_returns_answer():
     assert resp.status_code == 200
     assert "结论摘要" in resp.json()["answer"]
     assert "backend" in resp.json()
+    assert "citations" in resp.json()
+    assert "rag_enabled" in resp.json()
 
 
 def test_gap_endpoint():
@@ -91,3 +93,28 @@ def test_kb_ingest_search_list_flow():
     )
     assert search.status_code == 200
     assert search.json()["hits"]
+
+
+def test_chat_rag_uses_project_kb():
+    client.post(
+        "/api/kb/ingest",
+        json={
+            "token": "consultant-token",
+            "project": "rag-project",
+            "title": "项目危废制度",
+            "text": "危废暂存间应设置防渗层并张贴明显标识，转移联单与台账保持一致。",
+        },
+    )
+
+    resp = client.post(
+        "/api/chat",
+        json={
+            "token": "consultant-token",
+            "question": "危废暂存间要点是什么？",
+            "profile": {"region": "新疆", "industry": "石油化工", "project": "rag-project"},
+        },
+    )
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["rag_enabled"] is True
+    assert payload["citations"]

@@ -57,8 +57,16 @@ async function ask() {
         profile: profilePayload()
       })
     });
-    answerEl.textContent = data.answer || JSON.stringify(data, null, 2);
-    showToast('问答完成');
+    const answer = data.answer || JSON.stringify(data, null, 2);
+    const citations = (data.citations || []).length
+      ? "
+
+[KB引用]
+" + data.citations.join("
+")
+      : "";
+    answerEl.textContent = answer + citations;
+    showToast(data.rag_enabled ? '问答完成（含知识库引用）' : '问答完成');
   } catch (e) {
     answerEl.textContent = `请求失败: ${e.message}`;
     showToast(e.message, true);

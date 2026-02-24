@@ -52,6 +52,31 @@ def _audit(action: str, token: str, payload: dict):
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
+def _format_kb_citations(hits) -> list[str]:
+    citations: list[str] = []
+    for i, h in enumerate(hits, start=1):
+        snippet = h.chunk_text.replace("\n", " ")[:80]
+        citations.append(f"[{i}] {h.title}（doc_id={h.doc_id}，source={h.source or 'manual'}） 摘录：{snippet}")
+    return citations
+
+
+def _build_rag_answer(question: str, profile: dict, grounded_answer: str) -> tuple[str, list[str]]:
+    project = str(profile.get("project", "")).strip() or None
+    hits = kb.search(query=question, project=project, top_k=4)
+    if not hits:
+        return grounded_answer, []
+
+    citations = _format_kb_citations(hits)
+    kb_summary = "\n".join(f"- {c}" for c in citations)
+    rag_answer = (
+        grounded_answer
+        + "\n\n【项目知识库补充依据】\n"
+        + kb_summary
+        + "\n\n说明：以上为项目资料命中片段，请结合法规条款与最新有效文本复核。"
+    )
+    return rag_answer, citations
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse(request, "index.html", {})
@@ -68,9 +93,26 @@ def chat(payload: dict):
         raise HTTPException(status_code=400, detail="question required")
 
     grounded_answer = assistant.answer_user_question(question, profile)
-    answer = model_gateway.generate(question=question, profile=profile, grounded_answer=grounded_answer)
-    _audit("chat", token, {"role": user["role"], "question": question, "profile": profile})
-    return JSONResponse({"answer": answer, "backend": model_gateway.backend or "none"})
+    rag_grounded_answer, citations = _build_rag_answer(question, profile, grounded_answer)
+    answer = model_gateway.generate(question=question, profile=profile, grounded_answer=rag_grounded_answer)
+    _audit(
+        "chat",
+        token,
+        {
+            "role": user["role"],
+            "question": question,
+            "profile": profile,
+            "kb_hits": len(citations),
+        },
+    )
+    return JSONResponse(
+        {
+            "answer": answer,
+            "backend": model_gateway.backend or "none",
+            "citations": citations,
+            "rag_enabled": bool(citations),
+        }
+    )
 
 
 @app.post("/api/gap")

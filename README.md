@@ -83,6 +83,18 @@ export LLM_BACKEND=none
 - `consultant-token`
 - `viewer-token`
 
+## RAG知识库问答
+
+`POST /api/chat` 现已升级为 RAG 流程：
+1. 法规规则引擎生成基础答案
+2. 按 `profile.project` 检索项目知识库命中文档
+3. 将知识片段追加为“项目知识库补充依据”并返回 `citations`
+4. 可选调用 Ollama/OpenAI-Style 模型润色
+
+返回字段新增：
+- `citations`: 项目知识库引用列表
+- `rag_enabled`: 是否命中项目知识库
+
 ## API 摘要
 
 - `POST /api/chat`：法规问答（固定模板 + 引用 + 风险提示）
