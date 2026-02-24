@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>环保咨询工作台</title>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <h2>环保咨询工作台</h2>
+    <ul>
+      <li>对话工作台</li>
+      <li>标准/法规库</li>
+      <li>项目资料库</li>
+      <li>报告模板库</li>
+      <li>质控中心</li>
+      <li>导出与证据包</li>
+    </ul>
+    <p class="tip">示例Token: <code>consultant-token</code></p>
+  </aside>
+
+  <main class="main">
+    <section class="card">
+      <h3>法规问答（引用可追溯）</h3>
+      <input id="token" placeholder="token" value="consultant-token" />
+      <input id="region" placeholder="地区，如新疆" value="新疆" />
+      <input id="industry" placeholder="行业，如石油化工" value="石油化工" />
+      <textarea id="question" rows="3" placeholder="请输入问题，例如：危废暂存间要求和依据是什么？"></textarea>
+      <button onclick="ask()">发送问题</button>
+      <pre id="answer"></pre>
+    </section>
+
+    <section class="card">
+      <h3>危废合规差距分析（7/30/90天）</h3>
+      <button onclick="gap()">生成整改清单</button>
+      <pre id="gap"></pre>
+    </section>
+
+    <section class="card">
+      <h3>项目资料上传</h3>
+      <input id="project" placeholder="项目名" value="demo-project" />
+      <input type="file" id="file" />
+      <button onclick="upload()">上传文件</button>
+      <pre id="uploadResult"></pre>
+    </section>
+  </main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
