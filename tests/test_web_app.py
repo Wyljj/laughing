@@ -65,3 +65,29 @@ def test_chat_uses_model_gateway_when_enabled(monkeypatch):
     assert resp.status_code == 200
     assert resp.json()["answer"] == "模型增强回复"
     assert resp.json()["backend"] == "ollama"
+
+
+def test_kb_ingest_search_list_flow():
+    ingest = client.post(
+        "/api/kb/ingest",
+        json={
+            "token": "consultant-token",
+            "project": "demo-project",
+            "title": "危废管理制度",
+            "text": "危废暂存间应防渗防雨并设置标识，台账与联单一致。",
+        },
+    )
+    assert ingest.status_code == 200
+    doc_id = ingest.json()["doc_id"]
+    assert doc_id > 0
+
+    listed = client.get("/api/kb/list", params={"token": "consultant-token", "project": "demo-project"})
+    assert listed.status_code == 200
+    assert any(d["id"] == doc_id for d in listed.json()["documents"])
+
+    search = client.post(
+        "/api/kb/search",
+        json={"token": "consultant-token", "project": "demo-project", "query": "防渗 标识 台账"},
+    )
+    assert search.status_code == 200
+    assert search.json()["hits"]

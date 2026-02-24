@@ -99,3 +99,51 @@ async function upload() {
     btn.textContent = '上传文件';
   }
 }
+
+async function kbIngest() {
+  const out = document.getElementById('kbResult');
+  const title = document.getElementById('kbTitle').value.trim() || 'untitled';
+  const project = document.getElementById('kbProject').value.trim() || 'default-project';
+  const text = document.getElementById('kbText').value.trim();
+  if (!text) {
+    out.textContent = '请先输入要入库的文本。';
+    return;
+  }
+  const res = await fetch('/api/kb/ingest', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({token: document.getElementById('token').value, title, project, text})
+  });
+  const data = await res.json();
+  out.textContent = JSON.stringify(data, null, 2);
+}
+
+async function kbList() {
+  const out = document.getElementById('kbResult');
+  const token = encodeURIComponent(document.getElementById('token').value);
+  const project = encodeURIComponent(document.getElementById('kbProject').value || '');
+  const res = await fetch(`/api/kb/list?token=${token}&project=${project}`);
+  const data = await res.json();
+  out.textContent = JSON.stringify(data, null, 2);
+}
+
+async function kbSearch() {
+  const out = document.getElementById('kbResult');
+  const query = document.getElementById('kbQuery').value.trim();
+  if (!query) {
+    out.textContent = '请输入检索词。';
+    return;
+  }
+  const res = await fetch('/api/kb/search', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      token: document.getElementById('token').value,
+      query,
+      project: document.getElementById('kbProject').value || undefined,
+      top_k: 5
+    })
+  });
+  const data = await res.json();
+  out.textContent = JSON.stringify(data, null, 2);
+}

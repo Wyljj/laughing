@@ -51,6 +51,25 @@
       <pre id="answer" class="empty-state"><i class="fa-regular fa-lightbulb"></i> 请输入问题，系统将返回“结论 + 引用 + 风险提示”。</pre>
     </section>
 
+
+    <section class="card">
+      <h3>知识库系统（入库 / 检索 / 列表）</h3>
+      <div class="form-grid two-col">
+        <input id="kbTitle" placeholder="入库标题，如：危废管理制度" />
+        <input id="kbProject" placeholder="项目名" value="demo-project" />
+        <textarea id="kbText" rows="4" placeholder="粘贴法规条款或项目资料文本，用于知识库入库"></textarea>
+        <div class="actions">
+          <button class="btn btn-primary" type="button" onclick="kbIngest()">入库文本</button>
+          <button class="btn btn-ghost" type="button" onclick="kbList()">刷新列表</button>
+        </div>
+      </div>
+      <div class="actions">
+        <input id="kbQuery" placeholder="输入关键词检索知识库" />
+        <button class="btn btn-primary" type="button" onclick="kbSearch()">检索</button>
+      </div>
+      <pre id="kbResult" class="empty-state"><i class="fa-solid fa-database"></i> 这里显示知识库入库/检索结果。</pre>
+    </section>
+
     <section class="row-cards">
       <section class="card">
         <h3>危废合规差距分析</h3>

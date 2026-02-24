@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from eco_assistant import EnvironmentalConsultingAssistant
 from model_gateway import ModelGateway
+from knowledge_base import KnowledgeBase
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -23,6 +24,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "web" / "static")), na
 templates = Jinja2Templates(directory=str(BASE_DIR / "web" / "templates"))
 assistant = EnvironmentalConsultingAssistant()
 model_gateway = ModelGateway()
+kb = KnowledgeBase(BASE_DIR / "kb.sqlite3")
 
 # 简化示例 RBAC（生产建议换 JWT + 用户中心）
 TOKENS = {
@@ -98,6 +100,12 @@ async def upload_file(
     content = await file.read()
     target.write_bytes(content)
 
+    doc_id = None
+    if target.suffix.lower() in {".txt", ".md", ".csv"}:
+        text = content.decode("utf-8", errors="ignore")
+        if text.strip():
+            doc_id = kb.ingest_text(project=project, title=file.filename, text=text, source_path=str(target))
+
     _audit(
         "upload",
         token,
@@ -106,9 +114,10 @@ async def upload_file(
             "project": project,
             "filename": file.filename,
             "size": len(content),
+            "doc_id": doc_id,
         },
     )
-    return JSONResponse({"saved": str(target.relative_to(BASE_DIR))})
+    return JSONResponse({"saved": str(target.relative_to(BASE_DIR)), "doc_id": doc_id})
 
 
 @app.get("/api/audit")
@@ -121,3 +130,54 @@ def audit(token: str):
         return JSONResponse({"records": []})
     records = [json.loads(line) for line in AUDIT_LOG.read_text(encoding="utf-8").splitlines() if line.strip()]
     return JSONResponse({"records": records[-200:]})
+
+
+@app.post("/api/kb/ingest")
+def kb_ingest(payload: dict):
+    token = payload.get("token", "")
+    user = _auth(token)
+    if user["role"] not in ("admin", "consultant"):
+        raise HTTPException(status_code=403, detail="forbidden")
+
+    project = payload.get("project", "default-project")
+    title = payload.get("title", "untitled")
+    text = payload.get("text", "")
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="text required")
+
+    doc_id = kb.ingest_text(project=project, title=title, text=text, source_path="manual")
+    _audit("kb_ingest", token, {"project": project, "title": title, "doc_id": doc_id})
+    return JSONResponse({"doc_id": doc_id})
+
+
+@app.get("/api/kb/list")
+def kb_list(token: str, project: str | None = None):
+    _auth(token)
+    docs = kb.list_documents(project=project)
+    return JSONResponse({"documents": docs})
+
+
+@app.post("/api/kb/search")
+def kb_search(payload: dict):
+    token = payload.get("token", "")
+    _auth(token)
+    query = payload.get("query", "")
+    project = payload.get("project")
+    if not query:
+        raise HTTPException(status_code=400, detail="query required")
+
+    hits = kb.search(query=query, project=project, top_k=int(payload.get("top_k", 5)))
+    return JSONResponse(
+        {
+            "hits": [
+                {
+                    "doc_id": h.doc_id,
+                    "title": h.title,
+                    "chunk_text": h.chunk_text,
+                    "score": h.score,
+                    "source": h.source,
+                }
+                for h in hits
+            ]
+        }
+    )
