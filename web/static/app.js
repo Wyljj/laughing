@@ -10,6 +10,24 @@ function profilePayload() {
   };
 }
 
+function showToast(message, isError = false) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.remove('hidden');
+  toast.classList.toggle('error', isError);
+  setTimeout(() => toast.classList.add('hidden'), 2200);
+}
+
+async function requestJson(url, options = {}) {
+  const res = await fetch(url, options);
+  let data = {};
+  try { data = await res.json(); } catch (e) { data = {}; }
+  if (!res.ok) {
+    throw new Error(data.detail || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
 function setAskLoading(loading) {
   const btn = document.getElementById('askBtn');
   const spinner = document.getElementById('askSpinner');
@@ -24,12 +42,13 @@ async function ask() {
   const question = document.getElementById('question').value.trim();
   if (!question) {
     answerEl.textContent = '请先输入问题。';
+    showToast('请先输入问题', true);
     return;
   }
 
   setAskLoading(true);
   try {
-    const res = await fetch('/api/chat', {
+    const data = await requestJson('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -38,10 +57,11 @@ async function ask() {
         profile: profilePayload()
       })
     });
-    const data = await res.json();
-    answerEl.textContent = data.answer || data.detail || JSON.stringify(data, null, 2);
+    answerEl.textContent = data.answer || JSON.stringify(data, null, 2);
+    showToast('问答完成');
   } catch (e) {
-    answerEl.textContent = `请求失败: ${e}`;
+    answerEl.textContent = `请求失败: ${e.message}`;
+    showToast(e.message, true);
   } finally {
     setAskLoading(false);
   }
@@ -53,18 +73,16 @@ async function gap() {
   btn.disabled = true;
   btn.textContent = '生成中...';
   try {
-    const res = await fetch('/api/gap', {
+    const data = await requestJson('/api/gap', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        token: document.getElementById('token').value,
-        profile: profilePayload()
-      })
+      body: JSON.stringify({token: document.getElementById('token').value, profile: profilePayload()})
     });
-    const data = await res.json();
-    out.textContent = data.result || data.detail || JSON.stringify(data, null, 2);
+    out.textContent = data.result || JSON.stringify(data, null, 2);
+    showToast('整改清单已生成');
   } catch (e) {
-    out.textContent = `请求失败: ${e}`;
+    out.textContent = `请求失败: ${e.message}`;
+    showToast(e.message, true);
   } finally {
     btn.disabled = false;
     btn.textContent = '生成整改清单';
@@ -78,6 +96,7 @@ async function upload() {
   const f = fileInput.files[0];
   if (!f) {
     out.textContent = '请先选择文件。';
+    showToast('请先选择文件', true);
     return;
   }
 
@@ -89,11 +108,12 @@ async function upload() {
   btn.disabled = true;
   btn.textContent = '上传中...';
   try {
-    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-    const data = await res.json();
+    const data = await requestJson('/api/upload', {method: 'POST', body: fd});
     out.textContent = JSON.stringify(data, null, 2);
+    showToast('上传成功');
   } catch (e) {
-    out.textContent = `上传失败: ${e}`;
+    out.textContent = `上传失败: ${e.message}`;
+    showToast(e.message, true);
   } finally {
     btn.disabled = false;
     btn.textContent = '上传文件';
@@ -107,24 +127,35 @@ async function kbIngest() {
   const text = document.getElementById('kbText').value.trim();
   if (!text) {
     out.textContent = '请先输入要入库的文本。';
+    showToast('请先输入要入库的文本', true);
     return;
   }
-  const res = await fetch('/api/kb/ingest', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({token: document.getElementById('token').value, title, project, text})
-  });
-  const data = await res.json();
-  out.textContent = JSON.stringify(data, null, 2);
+  try {
+    const data = await requestJson('/api/kb/ingest', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({token: document.getElementById('token').value, title, project, text})
+    });
+    out.textContent = JSON.stringify(data, null, 2);
+    showToast('知识入库成功');
+  } catch (e) {
+    out.textContent = `入库失败: ${e.message}`;
+    showToast(e.message, true);
+  }
 }
 
 async function kbList() {
   const out = document.getElementById('kbResult');
-  const token = encodeURIComponent(document.getElementById('token').value);
-  const project = encodeURIComponent(document.getElementById('kbProject').value || '');
-  const res = await fetch(`/api/kb/list?token=${token}&project=${project}`);
-  const data = await res.json();
-  out.textContent = JSON.stringify(data, null, 2);
+  try {
+    const token = encodeURIComponent(document.getElementById('token').value);
+    const project = encodeURIComponent(document.getElementById('kbProject').value || '');
+    const data = await requestJson(`/api/kb/list?token=${token}&project=${project}`);
+    out.textContent = JSON.stringify(data, null, 2);
+    showToast('已刷新列表');
+  } catch (e) {
+    out.textContent = `列表获取失败: ${e.message}`;
+    showToast(e.message, true);
+  }
 }
 
 async function kbSearch() {
@@ -132,18 +163,37 @@ async function kbSearch() {
   const query = document.getElementById('kbQuery').value.trim();
   if (!query) {
     out.textContent = '请输入检索词。';
+    showToast('请输入检索词', true);
     return;
   }
-  const res = await fetch('/api/kb/search', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      token: document.getElementById('token').value,
-      query,
-      project: document.getElementById('kbProject').value || undefined,
-      top_k: 5
-    })
-  });
-  const data = await res.json();
-  out.textContent = JSON.stringify(data, null, 2);
+  try {
+    const data = await requestJson('/api/kb/search', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        token: document.getElementById('token').value,
+        query,
+        project: document.getElementById('kbProject').value || undefined,
+        top_k: 5
+      })
+    });
+    out.textContent = JSON.stringify(data, null, 2);
+    showToast('检索完成');
+  } catch (e) {
+    out.textContent = `检索失败: ${e.message}`;
+    showToast(e.message, true);
+  }
 }
+
+function bindEvents() {
+  document.getElementById('askBtn').addEventListener('click', ask);
+  document.getElementById('gapBtn').addEventListener('click', gap);
+  document.getElementById('uploadBtn').addEventListener('click', upload);
+  document.getElementById('kbIngestBtn').addEventListener('click', kbIngest);
+  document.getElementById('kbListBtn').addEventListener('click', kbList);
+  document.getElementById('kbSearchBtn').addEventListener('click', kbSearch);
+  document.getElementById('logoutBtn').addEventListener('click', () => showToast('已退出（演示态）'));
+  document.getElementById('exportBtn').addEventListener('click', () => showToast('证据包导出功能开发中'));
+}
+
+document.addEventListener('DOMContentLoaded', bindEvents);

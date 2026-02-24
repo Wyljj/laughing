@@ -30,7 +30,7 @@
       <div class="meta-wrap">
         <span><i class="fa-regular fa-folder"></i> 当前项目: demo-project</span>
         <span><i class="fa-regular fa-user"></i> 当前用户: 咨询师</span>
-        <button class="btn btn-ghost" type="button">退出</button>
+        <button id="logoutBtn" class="btn btn-ghost" type="button">退出</button>
       </div>
     </header>
 
@@ -43,14 +43,13 @@
         <textarea id="question" rows="3" placeholder="请输入问题，例如：危废暂存间要求和依据是什么？"></textarea>
       </div>
       <div class="actions">
-        <button id="askBtn" class="btn btn-primary" type="button" onclick="ask()">
+        <button id="askBtn" class="btn btn-primary" type="button">
           <span id="askSpinner" class="spinner hidden"></span>
           <span id="askText">发送问题</span>
         </button>
       </div>
       <pre id="answer" class="empty-state"><i class="fa-regular fa-lightbulb"></i> 请输入问题，系统将返回“结论 + 引用 + 风险提示”。</pre>
     </section>
-
 
     <section class="card">
       <h3><i class="fa-solid fa-database"></i> 知识库系统（入库 / 检索 / 列表）</h3>
@@ -59,13 +58,13 @@
         <input id="kbProject" placeholder="项目名" value="demo-project" />
         <textarea id="kbText" rows="4" placeholder="粘贴法规条款或项目资料文本，用于知识库入库"></textarea>
         <div class="actions">
-          <button class="btn btn-primary" type="button" onclick="kbIngest()">入库文本</button>
-          <button class="btn btn-ghost" type="button" onclick="kbList()">刷新列表</button>
+          <button id="kbIngestBtn" class="btn btn-primary" type="button">入库文本</button>
+          <button id="kbListBtn" class="btn btn-ghost" type="button">刷新列表</button>
         </div>
       </div>
       <div class="actions">
         <input id="kbQuery" placeholder="输入关键词检索知识库" />
-        <button class="btn btn-primary" type="button" onclick="kbSearch()">检索</button>
+        <button id="kbSearchBtn" class="btn btn-primary" type="button">检索</button>
       </div>
       <pre id="kbResult" class="empty-state"><i class="fa-solid fa-database"></i> 这里显示知识库入库/检索结果。</pre>
     </section>
@@ -73,7 +72,7 @@
     <section class="row-cards">
       <section class="card">
         <h3><i class="fa-solid fa-triangle-exclamation"></i> 危废合规差距分析</h3>
-        <div class="actions"><button id="gapBtn" class="btn btn-primary" type="button" onclick="gap()">生成整改清单</button></div>
+        <div class="actions"><button id="gapBtn" class="btn btn-primary" type="button">生成整改清单</button></div>
         <pre id="gap" class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i> 暂无分析结果。点击上方按钮生成 7/30/90 天整改计划。</pre>
       </section>
 
@@ -84,14 +83,15 @@
           <input type="file" id="file" />
         </div>
         <div class="actions">
-          <button id="uploadBtn" class="btn btn-primary" type="button" onclick="upload()">上传文件</button>
-          <button class="btn btn-ghost" type="button">批量导出证据包</button>
+          <button id="uploadBtn" class="btn btn-primary" type="button">上传文件</button>
+          <button id="exportBtn" class="btn btn-ghost" type="button">批量导出证据包</button>
         </div>
         <pre id="uploadResult" class="empty-state"><i class="fa-regular fa-file"></i> 暂无上传记录。</pre>
       </section>
     </section>
   </main>
 
-<script src="/static/app.js"></script>
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
 </body>
 </html>
