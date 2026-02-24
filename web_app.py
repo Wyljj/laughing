@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from eco_assistant import EnvironmentalConsultingAssistant
+from model_gateway import ModelGateway
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -21,6 +22,7 @@ app = FastAPI(title="环保咨询工作台", version="0.1.0")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "web" / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "web" / "templates"))
 assistant = EnvironmentalConsultingAssistant()
+model_gateway = ModelGateway()
 
 # 简化示例 RBAC（生产建议换 JWT + 用户中心）
 TOKENS = {
@@ -63,9 +65,10 @@ def chat(payload: dict):
     if not question:
         raise HTTPException(status_code=400, detail="question required")
 
-    answer = assistant.answer_user_question(question, profile)
+    grounded_answer = assistant.answer_user_question(question, profile)
+    answer = model_gateway.generate(question=question, profile=profile, grounded_answer=grounded_answer)
     _audit("chat", token, {"role": user["role"], "question": question, "profile": profile})
-    return JSONResponse({"answer": answer})
+    return JSONResponse({"answer": answer, "backend": model_gateway.backend or "none"})
 
 
 @app.post("/api/gap")

@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+import web_app
 from web_app import app
 
 
@@ -23,6 +24,7 @@ def test_chat_requires_token_and_returns_answer():
     )
     assert resp.status_code == 200
     assert "结论摘要" in resp.json()["answer"]
+    assert "backend" in resp.json()
 
 
 def test_gap_endpoint():
@@ -43,3 +45,23 @@ def test_gap_endpoint():
     )
     assert resp.status_code == 200
     assert "Gap清单" in resp.json()["result"]
+
+
+def test_chat_uses_model_gateway_when_enabled(monkeypatch):
+    def fake_generate(question, profile, grounded_answer):
+        return "模型增强回复"
+
+    monkeypatch.setattr(web_app.model_gateway, "generate", fake_generate)
+    monkeypatch.setattr(web_app.model_gateway, "backend", "ollama")
+
+    resp = client.post(
+        "/api/chat",
+        json={
+            "token": "consultant-token",
+            "question": "测试模型增强",
+            "profile": {"region": "全国", "industry": "通用"},
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["answer"] == "模型增强回复"
+    assert resp.json()["backend"] == "ollama"

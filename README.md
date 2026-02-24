@@ -45,6 +45,38 @@ uvicorn web_app:app --host 0.0.0.0 --port 8000
 docker compose up --build
 ```
 
+
+## 模型接入（Ollama / OpenAI-Style）
+
+`/api/chat` 已支持模型增强回复：先由规则引擎生成“有引用约束”的基础答案，再调用模型润色。
+
+### 1) 本地 Ollama
+
+```bash
+export LLM_BACKEND=ollama
+export OLLAMA_BASE_URL=http://127.0.0.1:11434
+export OLLAMA_MODEL=qwen2.5:7b-instruct
+uvicorn web_app:app --host 0.0.0.0 --port 8000
+```
+
+### 2) 其他 OpenAI-Style API
+
+```bash
+export LLM_BACKEND=openai
+export OPENAI_BASE_URL=https://your-api-base
+export OPENAI_API_KEY=your-key
+export OPENAI_MODEL=gpt-4o-mini
+uvicorn web_app:app --host 0.0.0.0 --port 8000
+```
+
+### 3) 关闭模型增强（仅规则答案）
+
+```bash
+export LLM_BACKEND=none
+```
+
+> 若模型调用失败，会自动回退到规则引擎答案，确保服务可用性。
+
 ## 默认测试 Token（演示）
 
 - `admin-token`
