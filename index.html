@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>测试页面</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #e4ecfb);
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 90%;
+      max-width: 600px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 30px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 32px;
+      color: #1f4fd1;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.7;
+      margin: 10px 0;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 8px 16px;
+      background: #1f4fd1;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 30px 20px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      p {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>网站部署成功 🎉</h1>
+    <p>这是一个测试首页。</p>
+    <p>如果你能看到这个页面，说明 GitHub Pages 已经正常运行。</p>
+    <div class="tag">GitHub Pages Test</div>
+    <div class="footer">你的域名 / GitHub Pages 测试页</div>
+  </div>
+</body>
+</html>
